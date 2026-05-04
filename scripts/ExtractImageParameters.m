@@ -18,6 +18,7 @@ results = [];
 for i = 1:length(files) % change to length(files) later
     
     filename = fullfile(folderPath, files(i).name);
+
     
     try
         % -------------------------------
@@ -33,20 +34,8 @@ for i = 1:length(files) % change to length(files) later
         % -------------------------------
         % 3.2 EXTRACT EXPOSURE PARAMETERS
         % -------------------------------
-        % if isfield(info, 'KVP')
-        %     kV = info.KVP;
-        % else
-        %     kV = NaN;
-        % end
+        [age, kV, mAs] = utils.extractImageInfo(files(i).name);
 
-        % if isfield(info, 'Exposure') && isfield(info, 'ExposureTime')
-        %     mAs = (info.Exposure * info.ExposureTime) / 1000;
-        % else
-        %     mAs = NaN;
-        % end
-
-        kV = -1;
-        mAs = -1;
 
         % -------------------------------
         % 3.3 RESIZE (STANDARDIZE)
