@@ -1,0 +1,72 @@
+---
+
+1. Extract the ZIP File
+
+* Locate the `.zip` file on your computer.
+* Right-click the file and choose **“Extract All…”** (Windows) or double-click it (macOS).
+* Select a destination folder (or use the default).
+* Click **Extract**.
+
+You should now see a regular folder containing the MATLAB files (e.g., `.m` files, data files, etc.).
+
+---
+
+
+
+2. Open MATLAB
+
+* Launch MATLAB from your applications or desktop.
+
+---
+
+
+
+3. Set the Working Folder
+
+* In MATLAB, look for the **“Current Folder”** panel.
+* Navigate to the folder where you extracted the ZIP file.
+
+  * You can do this by clicking **Browse** or manually entering the path in the command window:
+
+---
+
+
+
+4. Check the Files
+
+* Make sure the main script (usually a `.m` file like `main.m` or similar) is present in the scripts folder.
+
+---
+
+
+
+5. Run the Script
+
+* Double-click the script file to open it.
+* Click the **Run** button (green triangle).
+
+---
+
+
+6. Handle Dependencies (if needed)**
+
+* If errors appear about missing files:
+
+  * Ensure all files from the ZIP were extracted.
+  * Check if subfolders need to be added to the path:
+
+    ```matlab
+    addpath(genpath(pwd))
+    ```
+
+---
+
+
+
+7. Review Output
+
+* Results may appear in:
+
+  * A spreadsheet called image_quality_results.csv will be created in the data/sheets folder
+
+---

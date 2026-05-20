@@ -45,9 +45,10 @@ for i = 1:length(files) % change to length(files) later
         % -------------------------------
         % 3.4 DEFINE ROIs (EDIT FOR YOUR DATASET)
         % -------------------------------
-        lungROI = I(400:600, 400:600); % TODO: Remove this section
-        mediROI = I(650:850, 650:850);
-        airROI  = I(50:150, 50:150);
+        % lungROI = I(400:600, 400:600); % TODO: Remove this section
+        % mediROI = I(650:850, 650:850);
+        % airROI  = I(50:150, 50:150);
+        [lungROI, boneROI, airROI] = utils.autoRoiThreshold(I);
 
         % -------------------------------
         % 3.5 COMPUTE METRICS
@@ -60,10 +61,10 @@ for i = 1:length(files) % change to length(files) later
         SNR = mean(lungROI(:)) / noise;
 
         % CNR
-        CNR = abs(mean(lungROI(:)) - mean(mediROI(:))) / noise;
+        CNR = abs(mean(lungROI(:)) - mean(boneROI(:))) / noise;
 
         % Contrast
-        contrast = abs(mean(lungROI(:)) - mean(mediROI(:)));
+        contrast = abs(mean(lungROI(:)) - mean(boneROI(:)));
 
         % Sharpness (gradient-based)
         [Gx, Gy] = imgradientxy(I);
