@@ -4,13 +4,18 @@ clear;
 % -------------------------------
 % 1. SET IMAGE FOLDER PATH
 % -------------------------------
-folderPath = "data/images";   % CHANGE THIS
-saveFolderPath = "data/sheets/";
+scriptFolder = fileparts(mfilename('fullpath'));
+projectRoot = fileparts(scriptFolder);
+folderPath = fullfile(projectRoot, "data", "images");   % CHANGE THIS
+saveFolderPath = fullfile(projectRoot, "data", "sheets");
+if ~exist(saveFolderPath, 'dir')
+    mkdir(saveFolderPath);
+end
 files = dir(fullfile(folderPath, "*.png"));
 % -------------------------------
 % 2. INITIALIZE STORAGE
 % -------------------------------
-results = [];
+results = cell(0, 14);
 
 % -------------------------------
 % 3. LOOP THROUGH ALL IMAGES
@@ -70,13 +75,24 @@ for i = 1:length(files) % change to length(files) later
         [Gx, Gy] = imgradientxy(I);
         sharpness = mean(sqrt(Gx.^2 + Gy.^2), 'all');
 
+        % Acceptability checks
+        snrAcceptable = SNR >= 20 && SNR <= 80;
+        cnrAcceptable = CNR >= 4 && CNR <= 10;
+        noiseAcceptable = noise < 0.10;
+        sharpnessAcceptable = sharpness >= 3 && sharpness <= 7;
+        contrastAcceptable = contrast >= 0.3 && contrast <= 0.7;
+        overallAcceptable = snrAcceptable && cnrAcceptable && noiseAcceptable && ...
+            sharpnessAcceptable && contrastAcceptable;
+
         % -------------------------------
         % 3.6 STORE RESULTS
         % -------------------------------
-        results = [results; {files(i).name, kV, mAs, SNR, CNR, contrast, noise, sharpness}];
+        results = [results; {files(i).name, kV, mAs, SNR, CNR, contrast, noise, sharpness, ...
+            snrAcceptable, cnrAcceptable, noiseAcceptable, sharpnessAcceptable, ...
+            contrastAcceptable, overallAcceptable}];
 
-    catch
-        fprintf("Error processing: %s\n", files(i).name);
+    catch ME
+        fprintf("Error processing: %s\n%s\n", files(i).name, ME.message);
     end
 end
 
@@ -84,7 +100,9 @@ end
 % 4. CONVERT TO TABLE
 % -------------------------------
 resultsTable = cell2table(results, ...
-    'VariableNames', {'Filename','kV','mAs','SNR','CNR','Contrast','Noise','Sharpness'});
+    'VariableNames', {'Filename','kV','mAs','SNR','CNR','Contrast','Noise','Sharpness', ...
+    'SNRAcceptable','CNRAcceptable','NoiseAcceptable','SharpnessAcceptable', ...
+    'ContrastAcceptable','OverallAcceptable'});
 
 % -------------------------------
 % 5. SAVE TO CSV
