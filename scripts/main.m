@@ -2,113 +2,36 @@ clc;
 clear;
 
 % -------------------------------
-% 1. SET IMAGE FOLDER PATH
+% 1. SET FOLDER PATHS
 % -------------------------------
 scriptFolder = fileparts(mfilename('fullpath'));
 projectRoot = fileparts(scriptFolder);
-folderPath = fullfile(projectRoot, "data", "images");   % CHANGE THIS
+imagesRootPath = fullfile(projectRoot, "data", "images");
 saveFolderPath = fullfile(projectRoot, "data", "sheets");
+
 if ~exist(saveFolderPath, 'dir')
     mkdir(saveFolderPath);
 end
-files = dir(fullfile(folderPath, "*.png"));
-% -------------------------------
-% 2. INITIALIZE STORAGE
-% -------------------------------
-results = cell(0, 14);
 
 % -------------------------------
-% 3. LOOP THROUGH ALL IMAGES
+% 2. PROCESS EACH IMAGE SUBFOLDER
 % -------------------------------
-for i = 1:length(files) % change to length(files) later
-    
-    filename = fullfile(folderPath, files(i).name);
+imageSubfolders = dir(imagesRootPath);
+imageSubfolders = imageSubfolders([imageSubfolders.isdir]);
+imageSubfolders = imageSubfolders(~ismember({imageSubfolders.name}, {'.', '..'}));
 
-    
-    try
-        % -------------------------------
-        % 3.1 READ IMAGE + METADATA
-        % -------------------------------
-        I = im2double(imread(filename));
-
-        % Convert to grayscale if RGB
-        if size(I,3) == 3
-            I = rgb2gray(I);
-        end
-
-        % -------------------------------
-        % 3.2 EXTRACT EXPOSURE PARAMETERS
-        % -------------------------------
-        [age, kV, mAs] = utils.extractImageInfo(files(i).name);
-
-
-        % -------------------------------
-        % 3.3 RESIZE (STANDARDIZE)
-        % -------------------------------
-        I = imresize(I, [1024 1024]);
-
-        % -------------------------------
-        % 3.4 DEFINE ROIs (EDIT FOR YOUR DATASET)
-        % -------------------------------
-        % lungROI = I(400:600, 400:600); % TODO: Remove this section
-        % mediROI = I(650:850, 650:850);
-        % airROI  = I(50:150, 50:150);
-        [lungROI, boneROI, airROI] = utils.autoRoiThreshold(I);
-
-        % -------------------------------
-        % 3.5 COMPUTE METRICS
-        % -------------------------------
-
-        % Noise
-        noise = std(airROI(:));
-
-        % SNR
-        SNR = mean(lungROI(:)) / noise;
-
-        % CNR
-        CNR = abs(mean(lungROI(:)) - mean(boneROI(:))) / noise;
-
-        % Contrast
-        contrast = abs(mean(lungROI(:)) - mean(boneROI(:)));
-
-        % Sharpness (gradient-based)
-        [Gx, Gy] = imgradientxy(I);
-        sharpness = mean(sqrt(Gx.^2 + Gy.^2), 'all');
-
-        % Acceptability checks
-        snrAcceptable = SNR >= 20 && SNR <= 80;
-        cnrAcceptable = CNR >= 4 && CNR <= 10;
-        noiseAcceptable = noise < 0.10;
-        sharpnessAcceptable = sharpness >= 3 && sharpness <= 7;
-        contrastAcceptable = contrast >= 0.3 && contrast <= 0.7;
-        overallAcceptable = snrAcceptable && cnrAcceptable && noiseAcceptable && ...
-            sharpnessAcceptable && contrastAcceptable;
-
-        % -------------------------------
-        % 3.6 STORE RESULTS
-        % -------------------------------
-        results = [results; {files(i).name, kV, mAs, SNR, CNR, contrast, noise, sharpness, ...
-            snrAcceptable, cnrAcceptable, noiseAcceptable, sharpnessAcceptable, ...
-            contrastAcceptable, overallAcceptable}];
-
-    catch ME
-        fprintf("Error processing: %s\n%s\n", files(i).name, ME.message);
-    end
+if isempty(imageSubfolders)
+    fprintf("No image subfolders found in: %s\n", imagesRootPath);
 end
 
-% -------------------------------
-% 4. CONVERT TO TABLE
-% -------------------------------
-resultsTable = cell2table(results, ...
-    'VariableNames', {'Filename','kV','mAs','SNR','CNR','Contrast','Noise','Sharpness', ...
-    'SNRAcceptable','CNRAcceptable','NoiseAcceptable','SharpnessAcceptable', ...
-    'ContrastAcceptable','OverallAcceptable'});
+for i = 1:length(imageSubfolders)
+    subfolderName = imageSubfolders(i).name;
+    inputFolder = fullfile(imagesRootPath, subfolderName);
+    outputFile = fullfile(saveFolderPath, subfolderName + ".csv");
 
-% -------------------------------
-% 5. SAVE TO CSV
-% -------------------------------
-outputFile = fullfile(saveFolderPath, "image_quality_results.csv");
-writetable(resultsTable, outputFile);
+    fprintf("Processing folder: %s\n", inputFolder);
+    utils.processImageDirectory(inputFolder, outputFile);
+    fprintf("Results saved to: %s\n", outputFile);
+end
 
 disp("Processing complete!");
-disp("Results saved to: " + outputFile);
